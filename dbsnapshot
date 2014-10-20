@@ -1,0 +1,6 @@
+DATENOW=$(date +%F_%T)
+DBNAME=$(grep DB_NAME wp-config.php | cut -d "'" -f4)
+DBUSER=$(grep DB_USER wp-config.php | cut -d "'" -f4)
+DBPASS=$(grep DB_PASSWORD wp-config.php | cut -d "'" -f4)
+DBDIRECTORY="db"
+mysqldump -u $DBUSER --password=$DBPASS $DBNAME > "$DBDIRECTORY"/"$DATENOW"_"$DBNAME".sql

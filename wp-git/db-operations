@@ -1,4 +1,4 @@
-WPDIR=/home/xerophil/public_html/gaycamp/
+WPDIR="$(git rev-parse --show-toplevel)"/
 DBNAME=$(grep DB_NAME "$WPDIR"wp-config.php | cut -d "'" -f4)
 DBUSER=$(grep DB_USER "$WPDIR"wp-config.php | cut -d "'" -f4)
 DBPASS=$(grep DB_PASSWORD "$WPDIR"wp-config.php | cut -d "'" -f4)
