@@ -1,0 +1,90 @@
+#!/bin/bash
+while [[ $# > 1 ]]
+do
+key="$1"
+
+case $key in
+    -d|--db-name)
+    DB_NAME="$2"
+    shift
+    ;;
+    -P|--path)
+    INSTALLPATH="$2"
+    shift
+    ;;
+    *)
+            # unknown option
+    ;;
+esac
+shift
+done
+
+PASSWORD=`openssl rand -hex 16`
+
+if [ "$DB_NAME" == "" ]; then
+    printf "\033[34mWhat database name would you like to use? [a-z A-Z 0-9 $ _ only]\n> \033[0m"
+    read DB_NAME
+fi
+
+if [ "$INSTALLPATH" == "" ]; then
+    printf "\033[34mEnter a path for this installation.  The directory will be created or overwritten.  [Defaults to ./wordpress]\n> \033[0m"
+    read INSTALLPATH
+fi
+
+if [ -d "${INSTALLPATH}" ]; then
+    printf "\033[31mThe install path specified already exists!  Delete it, then try again.\n\033[0m"
+    exit
+fi
+
+
+if [ -d "wordpress" ]; then
+    printf "\033[31mWARNING: The wordpress/ directory already exists here!  Type YES to overwrite or anything else to quit.\n\033[0m"
+    read CONFIRM_WP_DIR
+    if [ "$CONFIRM_WP_DIR" != "YES" ]; then
+        printf "\033[31mExiting without action.\n\033[0m"
+        exit
+    fi
+fi
+
+#####################
+# file operations
+#####################
+
+printf "\033[36m* \033[32m\e[0;32mDownloading the latest version of WordPress\n\033[0m"
+wget --no-verbose http://wordpress.org/latest.tar.gz
+
+printf "\033[36m* \033[32mUnpacking archive\n\033[0m"
+tar -xzf latest.tar.gz
+
+if [ "$INSTALLPATH" == "" ]; then
+    let INSTALLPATH="./wordpress"
+fi
+
+printf "\033[36m* \033[32mMoving install to specified path\n\033[0m"
+mv wordpress/ ${INSTALLPATH}
+
+printf "\033[36m* \033[32mDeleting archive\n\033[0m"
+rm latest.tar.gz
+
+printf "\033[36m* \033[32mSetting up database in MySQL\n\033[0m"
+mysql -u root -p -e "CREATE DATABASE ${DB_NAME};CREATE USER '${DB_NAME}\'@\'localhost\' IDENTIFIED BY '${PASSWORD}';GRANT ALL ON ${DB_NAME}.* TO '${DB_NAME}'@'localhost' IDENTIFIED BY '${PASSWORD}';"
+
+#####################
+# wp-config.php setup
+#####################
+
+printf "\033[36m* \033[32mSetting database config in wp-config.php\n\033[0m"
+cp ${INSTALLPATH}/wp-config-sample.php ${INSTALLPATH}/wp-config.php
+sed -i '' -e"s/database_name_here/${DB_NAME}/" ${INSTALLPATH}/wp-config.php
+sed -i '' -e"s/username_here/${DB_NAME}/" ${INSTALLPATH}/wp-config.php
+sed -i '' -e"s/password_here/${PASSWORD}/" ${INSTALLPATH}/wp-config.php
+
+printf "\033[36m* \033[32mSetting security salts in wp-config.php\n\033[0m"
+for i in `seq 1 8`;
+do
+    sed -i '' -e"1,/'put your unique phrase here'/ s/'put your unique phrase here'/'`openssl rand -hex 32`'/" ${INSTALLPATH}/wp-config.php
+done
+
+printf "\033[32m----------------------------------------\n\033[0m"
+echo '              BOOM, DONE'
+printf "\033[32m----------------------------------------\n\033[0m"
