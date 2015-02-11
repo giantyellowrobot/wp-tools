@@ -19,16 +19,16 @@ esac
 shift
 done
 
-PASSWORD=`openssl rand -hex 16`
-
-if [ "$DB_NAME" == "" ]; then
-    printf "\033[34mWhat database name would you like to use? [a-z A-Z 0-9 $ _ only, max 16 char]\n> \033[0m"
-    read DB_NAME
-fi
+PASSWORD=`openssl rand -hex 8`
 
 if [ "$INSTALLPATH" == "" ]; then
     printf "\033[34mEnter a path for this installation.  The directory will be created or overwritten.  [Defaults to ./wordpress]\n> \033[0m"
     read INSTALLPATH
+fi
+
+if [ "$DB_NAME" == "" ]; then
+    printf "\033[34mWhat database name would you like to use? [16 char max, a-z A-Z 0-9 $ _ only]\n> \033[0m"
+    read DB_NAME
 fi
 
 if [ -d "${INSTALLPATH}" ]; then
@@ -73,16 +73,41 @@ mysql -u root -p -e "CREATE DATABASE ${DB_NAME};CREATE USER '${DB_NAME}'@'localh
 # wp-config.php setup
 #####################
 
+# have to handle sed syntax differently on OSX and Ubuntu.  
+run_sed_cmd()
+{
+    SED_CMD=$1
+    FIND=$2
+    REPLACE=$3
+    ${SED_CMD} -e"1,/${FIND}/ s/${FIND}/${REPLACE}/" ${INSTALLPATH}/wp-config.php
+}
+
+
+OS=`uname -s`
+if [ "${OS}" == "Darwin" ]; then
+    find_and_replace() {
+        FIND=$1
+        REPLACE=$2
+        run_sed_cmd "sed -i ''" "${FIND}" "${REPLACE}"
+    }
+else
+    find_and_replace() {
+        FIND=$1
+        REPLACE=$2
+        run_sed_cmd "sed -i''" "${FIND}" "${REPLACE}"
+    }
+fi
+
 printf "\033[36m* \033[32mSetting database config in wp-config.php\n\033[0m"
 cp ${INSTALLPATH}/wp-config-sample.php ${INSTALLPATH}/wp-config.php
-sed -i '' -e"s/database_name_here/${DB_NAME}/" ${INSTALLPATH}/wp-config.php
-sed -i '' -e"s/username_here/${DB_NAME}/" ${INSTALLPATH}/wp-config.php
-sed -i '' -e"s/password_here/${PASSWORD}/" ${INSTALLPATH}/wp-config.php
+find_and_replace 'database_name_here' ${DB_NAME}
+find_and_replace 'username_here' ${DB_NAME}
+find_and_replace 'password_here' ${PASSWORD}
 
 printf "\033[36m* \033[32mSetting security salts in wp-config.php\n\033[0m"
 for i in `seq 1 8`;
 do
-    sed -i '' -e"1,/'put your unique phrase here'/ s/'put your unique phrase here'/'`openssl rand -hex 32`'/" ${INSTALLPATH}/wp-config.php
+    find_and_replace 'put your unique phrase here' `openssl rand -hex 32`
 done
 
 printf "\033[32m----------------------------------------\n\033[0m"
