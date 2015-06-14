@@ -1,3 +1,4 @@
+#!/bin/bash
 WPDIR="$(git rev-parse --show-toplevel)"/
 DBNAME=$(grep DB_NAME "$WPDIR"wp-config.php | cut -d "'" -f4)
 DBUSER=$(grep DB_USER "$WPDIR"wp-config.php | cut -d "'" -f4)
