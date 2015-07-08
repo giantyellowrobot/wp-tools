@@ -1,4 +1,5 @@
 #!/bin/bash
 THISDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 source "$THISDIR"/db-operations
+mkdir -p "$(git rev-parse --show-toplevel)"/db
 mysqldump -u $DBUSER --password=$DBPASS $DBNAME > "$WPDIR""$DBDIRECTORY""$DBNAME".sql

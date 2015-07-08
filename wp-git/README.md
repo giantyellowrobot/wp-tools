@@ -8,9 +8,7 @@ All credentials, database names, etc. are pulled automatically from `wp-config.p
 
 ## Installation
 
-1. Copy script files to `.git/hooks/`.
-
-1. Create `db/` in the project root.
+Copy script files to `.git/hooks/`.
 
 ## Notes
 
