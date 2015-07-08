@@ -1,4 +1,4 @@
 #!/bin/bash
-THISDIR="$(dirname "$0")"
+THISDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 source "$THISDIR"/db-operations
 mysql -u $DBUSER --password=$DBPASS $DBNAME < "$WPDIR""$DBDIRECTORY""$DBNAME".sql
